@@ -14,6 +14,7 @@ StringTable::StringTable()
 {
     m_isLanguageTable = false;
     m_localized = false;
+    m_ownsData = false;
     m_strings = NULL;
     m_stringsById = NULL;
 }
@@ -78,8 +79,22 @@ std::wstring StringTable::FindLanguage(bool& found, long long& count)
             count += entry->second;
         }
     }
-    if (!found)
-        m_isLanguageTable = false;
+    if (!found && !m_entries.empty())
+    {
+        count = 0;
+        for (std::vector<std::pair<std::wstring, int> >::iterator entry = m_entries.begin(); entry != m_entries.end(); ++entry)
+        {
+            if (entry->first == L"en-EN")
+            {
+                found = true;
+                return entry->first;
+            }
+            count += entry->second;
+        }
+        found = true;
+        count = 0;
+        return m_entries.front().first;
+    }
     return selected;
 }
 
@@ -206,8 +221,11 @@ void StringTable::ReloadStringTable()
 {
     if (!m_localized)
     {
-        m_strings->clear();
-        m_stringsById->clear();
+        if (m_data.data != NULL)
+        {
+            if (m_strings != NULL) m_strings->clear();
+            if (m_stringsById != NULL) m_stringsById->clear();
+        }
     }
     ProcessStringTableData();
 }
@@ -231,7 +249,7 @@ wchar_t* StringTable::getString(const std::wstring& key)
 
 const wchar_t* StringTable::getString(int id)
 {
-    if (id != -1 && id != -2)
+    if (m_stringsById != NULL && id != -1 && id != -2)
     {
         boost::unordered_map<int, std::wstring>::iterator it = m_stringsById->find(id);
         if (it != m_stringsById->end())
@@ -242,6 +260,8 @@ const wchar_t* StringTable::getString(int id)
 
 unsigned int StringTable::getRandomStringId(Random* random)
 {
+    if (random == NULL || m_stringsById == NULL || m_stringsById->empty())
+        return static_cast<unsigned int>(-1);
     int selected = random->nextInt(m_stringsById->size());
     boost::unordered_map<int, std::wstring>::const_iterator it = m_stringsById->begin();
     for (int i = 0; i < selected; ++i)
@@ -252,6 +272,8 @@ unsigned int StringTable::getRandomStringId(Random* random)
 std::vector<int> StringTable::getRandomStringIds(int count, Random* random)
 {
     std::vector<int> result;
+    if (random == NULL || m_stringsById == NULL || count <= 0)
+        return result;
     unsigned int collected = 0;
     while ((int)collected < count && collected < m_stringsById->size())
     {
