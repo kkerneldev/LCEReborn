@@ -79,10 +79,34 @@ void CommonMasterGameMode::Setup(EMiniGameId miniGameId)
             delete mLocalizedStringTable;
             delete mEnglishStringTable;
             arrayWithLength<unsigned char> data = gApp.getArchiveFile(archiveName, false);
-            mLocalizedStringTable = new StringTable(data, false, false);
-            mEnglishStringTable = new StringTable(data, false, false);
+            mLocalizedStringTable = new StringTable(data, true, false);
+            mEnglishStringTable = new StringTable(data, true, false);
             mEnglishStringTable->SelectLanguage(L"en-EN");
             delete[] data.data;
+        }
+        // Reconstructed fallback themes, not original 4J localization.
+        // Use the same IDs on both client and server.
+        Random themeRandom;
+        if (mEnglishStringTable->getRandomStringIds(5, &themeRandom).size() < 5 ||
+            mLocalizedStringTable->getRandomStringIds(5, &themeRandom).size() < 5)
+        {
+            static const wchar_t* themes[] = {
+                L"Castle", L"Dragon", L"Treehouse", L"Pirate Ship", L"Robot",
+                L"Space Station", L"Train", L"Waterfall", L"Windmill", L"Lighthouse",
+                L"Farm", L"Airplane", L"Bridge", L"Volcano", L"Snowman",
+                L"Rocket", L"Garden", L"Submarine", L"Cat", L"Dog",
+                L"Library", L"Temple", L"Tower", L"Island", L"Fortress",
+                L"Hot Air Balloon", L"Clock", L"Monster", L"Mountain", L"Village"
+            };
+            mLocalizedStringTable->Reset();
+            mEnglishStringTable->Reset();
+            for (unsigned int i = 0; i < sizeof(themes) / sizeof(themes[0]); ++i)
+            {
+                mLocalizedStringTable->SetIdString(L"en-EN", i + 1, themes[i]);
+                mEnglishStringTable->SetIdString(L"en-EN", i + 1, themes[i]);
+            }
+            mLocalizedStringTable->SelectLanguage(L"en-EN");
+            mEnglishStringTable->SelectLanguage(L"en-EN");
         }
         break;
     }
