@@ -1426,6 +1426,7 @@ void MiniGameDef::StaticCtor()
     sMiniGameDefs[eMiniGameId_Battle] = parseMiniGameDef(std::wstring(L"MG01.xml"));
     sMiniGameDefs[eMiniGameId_Tumble] = parseMiniGameDef(std::wstring(L"MG02.xml"));
     sMiniGameDefs[eMiniGameId_Glide] = parseMiniGameDef(std::wstring(L"MG03.xml"));
+    sMiniGameDefs[eMiniGameId_Build] = parseMiniGameDef(std::wstring(L"MG04.xml"));
     InitializeCriticalSection(&sPlayerSettingsMutex);
 }
 
