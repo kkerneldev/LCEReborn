@@ -400,3 +400,9 @@ void StringTable::Reset()
     if (m_stringsById != NULL)
         m_stringsById->clear();
 }
+
+void StringTable::SetIdString(const std::wstring& language, int id, const std::wstring& value)
+{
+    m_isLanguageTable = true;
+    m_languages[language].stringsById[id] = value;
+}
