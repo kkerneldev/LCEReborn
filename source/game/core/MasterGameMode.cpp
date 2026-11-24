@@ -975,10 +975,10 @@ void MasterGameMode::SelectNewGameRules()
     {
         int voteCount;
         int themeWordId = mVoteables->getVoteable(Voteables::eVoteable_BuildOffTheme)->getWinningVote(voteCount);
-        if (themeWordId == -1)
+        if (themeWordId == -1 && !mThemeWordIds.empty())
         {
             Random random;
-            themeWordId = mThemeWordIds.at(random.nextInt(mThemeWordIds.size() - 1));
+            themeWordId = mThemeWordIds.at(random.nextInt(static_cast<int>(mThemeWordIds.size())));
         }
         setChosenThemeWordId(themeWordId);
         clearBuildOffVotes();
