@@ -1,0 +1,150 @@
+﻿<GameMode xmlns="Schema.xsd" version="7.0" name="MG04" id="4">
+
+    <!-- Reconstruction from MG01, MG02, MG03, lobby, surviving Build Off code and Minecraft Wiki.
+         Not an original 4J Studios asset. Durations and defaults are estimates. -->
+
+    <HostOptions version="2">
+        <!-- Filter order is significant. Defaults are one-based. -->
+        <MatchmakingFilter default="2">
+            <Variant><RoundLength value="180"/></Variant>
+            <Variant><RoundLength value="300"/></Variant>
+            <Variant><RoundLength value="600"/></Variant>
+        </MatchmakingFilter>
+        <!-- Sequential judging (variant 0) is supported by surviving MasterGameMode code.
+             Other variant semantics and original labels are unknown. -->
+        <MatchmakingFilter default="1">
+            <Variant>
+                <NoSmallSkins value="0"/>
+                <EnableVoting value="1"/>
+                <IsTeams value="0"/>
+            </Variant>
+        </MatchmakingFilter>
+        <MatchmakingFilter default="2">
+            <Variant><MaxPlayers value="8"/></Variant>
+            <Variant><MaxPlayers value="16"/></Variant>
+        </MatchmakingFilter>
+        <RoundLength default="300">180 300 600</RoundLength>
+        <NoSmallSkins default="0"/>
+        <SpectateMode default="1">0 1 2 3 4</SpectateMode>
+        <PointsActive default="0"/>
+        <PowerupsActive default="0"/>
+        <CentreSpawn default="0"/>
+        <EnableVoting default="1"/>
+        <IsTeams default="0"/>
+        <MaxPlayers default="16">8 16</MaxPlayers>
+    </HostOptions>
+
+    <StartConditions>
+        <Conjunction>
+            <!-- Two ready players, matching all three released mini games. -->
+            <PlayersCondition op="GreaterThanOrEquals" value="2" activeOnly="false" readyOnly="true"/>
+        </Conjunction>
+    </StartConditions>
+
+    <EndConditions>
+        <Disjunction>
+            <RoundTimeCondition value="$RoundLength"/>
+            <PlayersCondition op="LessThanOrEquals" value="0" activeOnly="true" readyOnly="false"/>
+        </Disjunction>
+    </EndConditions>
+
+    <PostGameConditions>
+        <Disjunction>
+            <!-- Estimated judging time per plot. MasterGameMode resets the clock. -->
+            <PostGameTimeCondition value="15"/>
+            <!-- PlayersVotedPercent exists but currently returns a constant 50.
+                 Do not enable until its implementation is restored. -->
+        </Disjunction>
+    </PostGameConditions>
+
+    <DifficultyOverride>Peaceful</DifficultyOverride>
+    <PlayerGameType>Creative</PlayerGameType>
+    <PlayerAbilities>
+        <Invulnerable>true</Invulnerable>
+        <MayFly>true</MayFly>
+        <Instabuild>true</Instabuild>
+        <MayBuild>true</MayBuild>
+    </PlayerAbilities>
+
+    <LivesPerRound>1</LivesPerRound>
+    <RoundCount>1</RoundCount>
+    <!-- Actual Build Off team count is determined by map named areas. -->
+    <TeamCount>16</TeamCount>
+    <TeamBasedSpawn>true</TeamBasedSpawn>
+    <TeamMaxSize>2</TeamMaxSize>
+    <CheckpointBasedSpawn>false</CheckpointBasedSpawn>
+    <MaxPlayersForSmallMaps>6</MaxPlayersForSmallMaps>
+
+    <SpectateMode>$SpectateMode</SpectateMode>
+    <ShowNametags>false</ShowNametags>
+    <ShowInvulnerableEffect>false</ShowInvulnerableEffect>
+    <ShowdownAnnouncements>false</ShowdownAnnouncements>
+    <LockedInventory>false</LockedInventory>
+    <IndicatorDelay>1.0</IndicatorDelay>
+    <AllowPvP>false</AllowPvP>
+    <AllowCrafting>false</AllowCrafting>
+    <EnableTutorials>false</EnableTutorials>
+    <NaturalRegeneration>false</NaturalRegeneration>
+    <CanTntDestroyBlocks>false</CanTntDestroyBlocks>
+    <CanLavaConvertWater>false</CanLavaConvertWater>
+    <LoadOnlyActiveAreaChunks>false</LoadOnlyActiveAreaChunks>
+    <AllowsUGC>false</AllowsUGC>
+
+    <!-- Plot containment and phase-specific restrictions require engine enforcement. -->
+    <DestroyPermissions mode="NoRestrictions"/>
+    <PlacePermissions mode="BlackList">
+        <Exception id="46"/> <!-- TNT -->
+        <Exception id="51"/> <!-- Fire -->
+        <Exception id="137"/> <!-- Command block -->
+        <Exception id="210"/> <!-- Repeating command block -->
+        <Exception id="211"/> <!-- Chain command block -->
+        <Exception id="255"/> <!-- Structure block -->
+    </PlacePermissions>
+    <UsePermissions mode="BlackList">
+        <Exception id="259"/> <!-- Flint and steel -->
+        <Exception id="385"/> <!-- Fire charge -->
+        <Exception id="383"/> <!-- Spawn egg -->
+        <Exception id="326"/> <!-- Water bucket -->
+        <Exception id="327"/> <!-- Lava bucket -->
+        <Exception id="407"/> <!-- TNT minecart -->
+    </UsePermissions>
+    <BlockUsePermissions mode="NoRestrictions"/>
+
+    <BlockTicking override="true">
+        <Exception id="39">false</Exception>
+        <Exception id="40">false</Exception>
+        <Exception id="6">false</Exception> <!-- Sapling -->
+        <Exception id="18">false</Exception> <!-- Leaves -->
+        <Exception id="161">false</Exception> <!-- Leaves 2 -->
+        <Exception id="79">false</Exception>
+    </BlockTicking>
+
+    <!-- Timers are in seconds. -->
+    <Timers>
+        <RoundPreparing duration="5"/>
+        <RoundStartDelay duration="10" announceEvery="1"/>
+        <GracePeriod duration="0"/>
+        <RoundEndDelay duration="10" announceEvery="1"/>
+        <RoundLimit changeAnnounceWhenRemaining="60" changedAnnounce="1"/>
+        <PostGame duration="15" announceEvery="1"/>
+    </Timers>
+
+    <!-- Existing generic sound events. Wiki documents six Creative tracks and
+         a missing MG04_01.binka; music selection is outside this XML. -->
+    <Sounds>
+        <OnRoundStart/>
+        <OnRoundPlay/>
+        <OnRoundEnding/>
+        <RoundStartTimer forLast="5"/>
+        <RoundLimitTimer forLast="30"/>
+    </Sounds>
+
+    <!-- Empty normal inventory, using the same fixed distribution format as Glide. -->
+    <LootSets>
+        <LootSet name="Normal">
+            <LootGroup name="PlayerInventory" kpScore="1" distributionMethod="Fixed">
+                <Kit weight="1" kpScore="1"/>
+            </LootGroup>
+        </LootSet>
+    </LootSets>
+</GameMode>
