@@ -175,6 +175,20 @@ void WallGenerator::GetLayerExtents(unsigned int, float*, float*)
 {
 }
 
-void WallGenerator::SetArea(Level*, BlockTransaction*, AABB*, const BlockState*)
+void WallGenerator::SetArea(Level*, BlockTransaction* transaction, AABB* area, const BlockState* state)
 {
+    if (transaction == NULL || area == NULL || state == NULL || mBounds == NULL)
+        return;
+
+    const AABB* grown = mBounds->grow(2.0, 1.0, 2.0);
+    const Vec3i origin(static_cast<int>(grown->mMinX), static_cast<int>(grown->mMinY),
+                       static_cast<int>(grown->mMinZ));
+    for (int x = static_cast<int>(area->mMinX); x < area->mMaxX; ++x)
+        for (int y = static_cast<int>(area->mMinY); y < area->mMaxY; ++y)
+            for (int z = static_cast<int>(area->mMinZ); z < area->mMaxZ; ++z)
+            {
+                const Vec3i position(x - origin.x, y - origin.y, z - origin.z);
+                if (transaction->inBounds(position))
+                    transaction->setBlock(position, state);
+            }
 }
