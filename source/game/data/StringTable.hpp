@@ -40,6 +40,7 @@ public:
     void copyStringToTable(const std::wstring& key, StringTable* table);
     void write(DataOutputStream* stream);
     void Reset();
+    void SetIdString(const std::wstring& language, int id, const std::wstring& value);
 
 private:
     bool m_isLanguageTable;
