@@ -19,9 +19,8 @@
                 <IsTeams value="0"/>
             </Variant>
         </MatchmakingFilter>
-        <MatchmakingFilter default="2">
+        <MatchmakingFilter default="1">
             <Variant><MaxPlayers value="8"/></Variant>
-            <Variant><MaxPlayers value="16"/></Variant>
         </MatchmakingFilter>
         <RoundLength default="300">180 300 600</RoundLength>
         <NoSmallSkins default="0"/>
@@ -31,7 +30,7 @@
         <CentreSpawn default="0"/>
         <EnableVoting default="1"/>
         <IsTeams default="0"/>
-        <MaxPlayers default="16">8 16</MaxPlayers>
+        <MaxPlayers default="8">8</MaxPlayers>
     </HostOptions>
 
     <StartConditions>
@@ -69,9 +68,9 @@
     <LivesPerRound>1</LivesPerRound>
     <RoundCount>1</RoundCount>
     <!-- Actual Build Off team count is determined by map named areas. -->
-    <TeamCount>16</TeamCount>
+    <TeamCount>8</TeamCount>
     <TeamBasedSpawn>true</TeamBasedSpawn>
-    <TeamMaxSize>2</TeamMaxSize>
+    <TeamMaxSize>1</TeamMaxSize>
     <CheckpointBasedSpawn>false</CheckpointBasedSpawn>
     <MaxPlayersForSmallMaps>6</MaxPlayersForSmallMaps>
 
