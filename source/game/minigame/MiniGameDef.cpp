@@ -1375,16 +1375,15 @@ MiniGameDef* MiniGameDef::parseMiniGameDef(std::wstring fileName)
 {
     fileName = std::wstring(L"Common\\res\\TitleUpdate\\GameRules\\") + fileName;
     File file(fileName);
+    if (!file.exists() || file.ext() != L".xml")
+        return new MiniGameDef();
     FileInputStream stream(file);
     unsigned int size = stream.filesize();
+    if (size == 0)
+        return new MiniGameDef();
     arrayWithLength<unsigned char> data(size, true);
-    bool valid = file.ext() == L".xml" && file.exists();
-    if (valid)
-    {
-        stream.read(data);
-        return parseMiniGameDef(data);
-    }
-    return new MiniGameDef();
+    stream.read(data);
+    return parseMiniGameDef(data);
 }
 
 void MiniGameDef::SetPlayerSettings(const MiniGamePlayerSettings& settings)
