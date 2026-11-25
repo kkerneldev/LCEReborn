@@ -16,6 +16,8 @@ const wchar_t* ExtraString(int id)
     case IDS_LCE_ITEM_SHIELD:
     case IDS_LCE_DESC_SHIELD:
         return LocalizedShieldString(XGetLanguage(), id == IDS_LCE_DESC_SHIELD);
+    case IDS_LCE_BUILD_OFF:
+        return L"Build Off";
     case IDS_LCE_CHAT:
         return L"Chat";
     case IDS_LCE_CHAT_SEND:
