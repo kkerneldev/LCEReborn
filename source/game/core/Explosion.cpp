@@ -89,6 +89,13 @@ Explosion::~Explosion()
 
 void Explosion::explode()
 {
+    if (Minecraft::InMiniGame(eMiniGameId_Build, false))
+    {
+        mBreaksBlocks = false;
+        mFire = false;
+        mToBlow.clear();
+        return;
+    }
     unsigned int nestedExplosions = (unsigned int)(uintptr_t)TlsGetValue(gExplosionCountTlsIndex);
 
     if (nestedExplosions > 50)
@@ -410,6 +417,8 @@ void Explosion::explode()
 
 void Explosion::finalizeExplosion(bool spawnParticles, std::vector<BlockPos>* toBlow)
 {
+    if (Minecraft::InMiniGame(eMiniGameId_Build, false))
+        return;
     mLevel->playLocalSound(mX, mY, mZ, SoundEvents::GENERIC_EXPLODE, SoundSource::eSoundSource_Blocks, 4.0f,
                            ((mLevel->mRandom->nextFloat() - mLevel->mRandom->nextFloat()) * 0.2f + 1.0f) * 0.7f, false,
                            16.0f);
