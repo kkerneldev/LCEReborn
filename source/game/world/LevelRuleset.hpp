@@ -46,6 +46,7 @@ public:
     NamedAreaRuleDefinition* getNamedAreaRule(const std::wstring& name);
     AABB* getNamedArea(const std::wstring& name);
     void getNamedAreas(int areaType, std::vector<AABB*>* areas);
+    void ensureBuildOffPlots(int originX, int originY, int originZ);
     void getNonSpecialisedNamedAreas(std::vector<AABB*>* areas);
     void getActiveChunkAreas(std::vector<AABB*>* areas);
     void getActiveChunkAreas(std::vector<NamedAreaRuleDefinition*>* areas);
