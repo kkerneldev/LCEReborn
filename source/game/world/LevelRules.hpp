@@ -57,6 +57,7 @@ public:
 
 private:
     void addToGroup(LevelRuleset* ruleset);
+    void ensureBuildOffArena();
 
     std::vector<LevelRuleset*> m_levelRules;
     std::vector<LevelRulesetGroup*> m_ruleGroups;
