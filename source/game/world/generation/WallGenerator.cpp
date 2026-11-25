@@ -1,6 +1,7 @@
 #include "game/world/generation/WallGenerator.hpp"
 
 #include <cmath>
+#include <algorithm>
 #include <vector>
 
 #include "game/util/AABB.hpp"
@@ -28,37 +29,44 @@ WallGenerator::Wall::~Wall()
 
 WallGenerator::WallGenerator(Random random, std::vector<AABB*>* areas, std::vector<AABB*>* walls) : MapGenerator(random)
 {
-    mAreas = *areas;
     mBounds = NULL;
-    std::vector<AABB*>::iterator area = mAreas.begin();
-    while (area != mAreas.end())
+    if (areas != NULL)
     {
-        if (mBounds != NULL)
+        for (std::vector<AABB*>::iterator area = areas->begin(); area != areas->end(); ++area)
         {
-            mBounds = mBounds->minmax(*area);
+            if (*area == NULL)
+                continue;
+            mAreas.push_back(*area);
+            if (mBounds == NULL)
+                mBounds = new AABB(**area);
+            else
+                mBounds->set(mBounds->minmax(*area));
         }
-        else
-        {
-            mBounds = *area;
-        }
-        ++area;
     }
-
     if (walls != NULL)
     {
-        std::vector<AABB*>::iterator wall = walls->begin();
-        while (wall != walls->end())
+        for (std::vector<AABB*>::iterator wall = walls->begin(); wall != walls->end(); ++wall)
         {
-            mBounds = mBounds->minmax(*wall);
+            if (*wall == NULL)
+                continue;
+            if (mBounds == NULL)
+                mBounds = new AABB(**wall);
+            else
+                mBounds->set(mBounds->minmax(*wall));
             mWalls.push_back(new Wall(*wall, true, false));
-            ++wall;
         }
     }
-    mBounds = mBounds->grow(2.0, 0.0, 2.0);
+    if (mBounds != NULL)
+    {
+        mBounds->set(mBounds->grow(2.0, 0.0, 2.0));
+        if (mWalls.empty())
+            mBounds->mMaxY = std::max(mBounds->mMaxY, mBounds->mMinY + 16.0);
+    }
 }
 
 WallGenerator::~WallGenerator()
 {
+    delete mBounds;
     std::vector<Wall*>::iterator wall = mWalls.begin();
     while (wall != mWalls.end())
     {
@@ -87,7 +95,10 @@ bool WallGenerator::IsPointInternal(int x, int z, int size)
 
 void WallGenerator::StartGeneration(Level* level)
 {
-    AABB* grown = mBounds->grow(2.0, 1.0, 2.0);
+    if (level == NULL || mBounds == NULL || mAreas.empty())
+        return;
+    const AABB grownBounds(*mBounds->grow(2.0, 1.0, 2.0));
+    const AABB* grown = &grownBounds;
     BlockTransaction* transaction = BlockTransaction::CreateTransaction(
         BlockPos(grown->mMinX, grown->mMinY, grown->mMinZ), BlockPos(grown->mMaxX, grown->mMaxY, grown->mMaxZ));
 
@@ -123,22 +134,20 @@ void WallGenerator::StartGeneration(Level* level)
             }
         }
 
-        const BlockState* voidState = Blocks::structure_void->defaultBlockState();
-        SetArea(level, transaction,
-                AABB::newTemp(grown->mMinX, grown->mMinY, grown->mMinZ, grown->mMaxX, grown->mMinY + 1.0, grown->mMaxZ),
-                voidState);
-        SetArea(level, transaction, grown, Blocks::planks->defaultBlockState());
+    }
 
-        for (std::vector<AABB*>::iterator area = mAreas.begin(); area != mAreas.end(); ++area)
-        {
-            AABB* bounds = *area;
-            const BlockState* floor = Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT,
-                                                                                    PlanksBlock::Variant::SPRUCE);
-            SetArea(level, transaction,
-                    AABB::newTemp(bounds->mMinX, bounds->mMinY - 1.0, bounds->mMinZ, bounds->mMaxX, bounds->mMinY,
-                                  bounds->mMaxZ),
-                    floor);
-        }
+    // Clear builds on every round, even when explicit walls were supplied.
+    // structure_void is the transaction's explicit air marker.
+    const BlockState* voidState = Blocks::structure_void->defaultBlockState();
+    const BlockState* floor = Blocks::planks->defaultBlockState()->setValue(
+        PlanksBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
+    for (std::vector<AABB*>::iterator area = mAreas.begin(); area != mAreas.end(); ++area)
+    {
+        const AABB* bounds = *area;
+        SetArea(level, transaction, *area, voidState);
+        AABB floorArea(bounds->mMinX, bounds->mMinY - 1.0, bounds->mMinZ,
+                       bounds->mMaxX, bounds->mMinY, bounds->mMaxZ);
+        SetArea(level, transaction, &floorArea, floor);
     }
 
     for (std::vector<Wall*>::iterator wall = mWalls.begin(); wall != mWalls.end(); ++wall)
