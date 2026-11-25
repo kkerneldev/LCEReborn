@@ -354,6 +354,17 @@ static fs::path ResolvePath(const char* fileName)
         return UnderRoot(PcResourceRoot(), rest);
 #endif
 
+    // Prefer shipped reconstructed minigame assets over the imported game dump.
+    // Restrict the overlay to our two Build Off files.
+    if (path == "Common/res/TitleUpdate/GameRules/MG04.xml" ||
+        path == "Common/res/TitleUpdate/GameRules/gameModeLanguages.loc")
+    {
+        const fs::path overlay = PcResourceRoot() / GamePath("build-off/" + path);
+        std::error_code error;
+        if (fs::is_regular_file(overlay, error))
+            return overlay;
+    }
+
     const fs::path nativePath = GamePath(path);
 #if LCE_PLATFORM_SWITCH
     if (path.compare(0, sizeof("sdmc:/") - 1, "sdmc:/") == 0
