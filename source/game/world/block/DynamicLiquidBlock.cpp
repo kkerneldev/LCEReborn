@@ -259,6 +259,8 @@ void DynamicLiquidBlock::_getSpread(Level* level, const BlockPos& pos, bool (&sp
 
 void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
+    if (Minecraft::InMiniGame(eMiniGameId_Build, false))
+        return;
     bool extraLayer = level->getBlockState(pos)->getMaterial() != mMaterial;
     int depth = getDepth(level, pos);
     int dropOff = 1;
