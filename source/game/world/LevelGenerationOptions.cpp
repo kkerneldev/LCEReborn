@@ -434,6 +434,12 @@ int LevelGenerationOptions::packMounted(void* data, int mountIndex, unsigned int
 
 void LevelGenerationOptions::loadBaseSaveData()
 {
+    if (mPack == NULL && mRequiredGameRules != NULL &&
+        mRequiredGameRules->getRuleType() == LevelRules::eLevelRuleType_Build && !requiresBaseSave())
+    {
+        setLoadedData();
+        return;
+    }
     if (mPack == NULL)
     {
         loadGameRulesHeaders(NULL, mStringTable, this);
