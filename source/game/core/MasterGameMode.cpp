@@ -916,8 +916,18 @@ unsigned int MasterGameMode::GetTeamCount()
     if (Minecraft::GetInstance()->GetMiniGame()->GetId() == eMiniGameId_Build && mNextLevelGenOptions != NULL)
     {
         std::vector<AABB*> buildAreas;
-        mNextLevelGenOptions->getRequiredGameRules()->getNamedAreas(0xff, &buildAreas);
-        return buildAreas.size();
+        LevelRuleset* rules = mNextLevelGenOptions->getRequiredGameRules();
+        if (rules == NULL)
+            return 0;
+        rules->ensureBuildOffPlots(-98, 65, -49);
+        for (unsigned int i = 0; i < 8; ++i)
+        {
+            std::vector<AABB*> areas;
+            rules->getNamedAreas(1U << i, &areas);
+            if (!areas.empty())
+                buildAreas.push_back(areas.front());
+        }
+        return static_cast<unsigned int>(buildAreas.size());
     }
     return Minecraft::GetInstance()->GetMiniGame()->GetTeamCount();
 }
