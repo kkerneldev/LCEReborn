@@ -1,4 +1,6 @@
 #include "game/core/CommonMasterGameMode.hpp"
+#include "game/core/File.hpp"
+#include "game/core/FileInputStream.hpp"
 #include <algorithm>
 #include "game/core/EntityType.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
@@ -75,11 +77,25 @@ void CommonMasterGameMode::Setup(EMiniGameId miniGameId)
     case eMiniGameId_Build:
     {
         std::wstring archiveName(L"gameModeLanguages.loc");
-        if (gApp.hasArchiveFile(archiveName, false))
+        File looseFile(L"Common\\res\\TitleUpdate\\GameRules\\gameModeLanguages.loc");
+        arrayWithLength<unsigned char> data;
+        if (looseFile.exists())
+        {
+            FileInputStream stream(looseFile);
+            unsigned int size = stream.filesize();
+            if (size > 0 && size < 1024 * 1024)
+            {
+                data = arrayWithLength<unsigned char>(size, true);
+                stream.read(data);
+            }
+            stream.close();
+        }
+        else if (gApp.hasArchiveFile(archiveName, false))
+            data = gApp.getArchiveFile(archiveName, false);
+        if (data.data != NULL && data.length > 0)
         {
             delete mLocalizedStringTable;
             delete mEnglishStringTable;
-            arrayWithLength<unsigned char> data = gApp.getArchiveFile(archiveName, false);
             mLocalizedStringTable = new StringTable(data, true, false);
             mEnglishStringTable = new StringTable(data, true, false);
             mEnglishStringTable->SelectLanguage(L"en-EN");
