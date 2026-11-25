@@ -1,3 +1,4 @@
+#include "game/core/ExtraStrings.hpp"
 #include "game/core/IUIScene_LoadCreateJoin.hpp"
 #include "game/core/StringIds.hpp"
 
@@ -335,9 +336,10 @@ void IUIScene_LoadCreateJoin::AddDefaultButtons()
             {IDS_MINI_GAME_01, L"BattleModeIcon", eMiniGameId_Battle},
             {IDS_MINI_GAME_02, L"MG02icon", eMiniGameId_Tumble},
             {IDS_MINI_GAME_03, L"MG03icon", eMiniGameId_Glide},
+            {IDS_LCE_BUILD_OFF, L"CreateWorldIcon", eMiniGameId_Build},
         };
         ShowSaveListTimer(false);
-        for (int i = 0; i < 3; ++i)
+        for (unsigned int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); ++i)
         {
             std::wstring label = L10N::GetString(buttons[i].label);
             std::wstring icon = buttons[i].icon;
