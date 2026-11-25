@@ -115,6 +115,9 @@ int ServerPlayerGameMode::superDestroyBlock(const BlockPos& pos)
 }
 int ServerPlayerGameMode::destroyBlock(const BlockPos& pos)
 {
+    if (gMinecraftServer != NULL && gMinecraftServer->mMasterGameMode != NULL &&
+        !gMinecraftServer->mMasterGameMode->CanEditBuildOffPlot(getServerPlayer(), pos))
+        return 0;
     if (isCreative())
     {
         if (dynamic_cast<SwordItem*>(mPlayer->getMainHandItem()->getItem()) != NULL)
@@ -204,6 +207,14 @@ InteractionResult::EInteractionResult ServerPlayerGameMode::useItemOn(boost::sha
                                                                       float hitX, float hitY, float hitZ, bool simulate,
                                                                       bool* result)
 {
+    if (gMinecraftServer != NULL && gMinecraftServer->mMasterGameMode != NULL &&
+        CommonMasterGameMode::GetMiniGame()->GetId() == eMiniGameId_Build)
+    {
+        MasterGameMode* mode = gMinecraftServer->mMasterGameMode;
+        if (!mode->CanEditBuildOffPlot(getServerPlayer(), pos) ||
+            !mode->CanEditBuildOffPlot(getServerPlayer(), pos.relative(direction)))
+            return InteractionResult::eInteractionResult_Fail;
+    }
     if (GetGameType() == GameType::SPECTATOR)
     {
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
@@ -290,6 +301,9 @@ InteractionResult::EInteractionResult ServerPlayerGameMode::useItemOn(boost::sha
 }
 bool ServerPlayerGameMode::startDestroyBlock(const BlockPos& pos, const Direction* direction)
 {
+    if (gMinecraftServer != NULL && gMinecraftServer->mMasterGameMode != NULL &&
+        !gMinecraftServer->mMasterGameMode->CanEditBuildOffPlot(getServerPlayer(), pos))
+        return false;
     if (!mPlayer->isAllowedToMine() || !MayDestroy(pos))
     {
         if (Minecraft::InMiniGame(eMiniGameId_Lobby, true))
