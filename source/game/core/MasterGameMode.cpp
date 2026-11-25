@@ -1775,6 +1775,42 @@ std::vector<PlayerTeam*> MasterGameMode::GetActiveTeams()
     return teams;
 }
 
+bool MasterGameMode::ValidateBuildOffVote(const boost::shared_ptr<ServerPlayer>& player, int type, int target, int value)
+{
+    if (!player || GetMiniGame()->GetId() != eMiniGameId_Build || player->isSpectator())
+        return false;
+    if (type == Voteables::eVoteable_BuildOffTheme)
+    {
+        if (IsRoundPlaying() || GetState() == eInternalGameModeState_PostRound)
+            return false;
+        return (value == 1 || value == -1) &&
+            std::find(mThemeWordIds.begin(), mThemeWordIds.end(), target) != mThemeWordIds.end();
+    }
+    if (type != Voteables::eVoteable_BuildOffScoring || GetState() != eInternalGameModeState_PostRound ||
+        value < -1 || value >= 4 || player->getTeam() == NULL)
+        return false;
+    const std::vector<PlayerTeam*> teams = GetActiveTeams();
+    for (unsigned int i = 0; i < teams.size(); ++i)
+    {
+        if (teams[i]->getTeamIndex() != static_cast<unsigned int>(target) || teams[i] == player->getTeam())
+            continue;
+        return GetMiniGame()->GetGameVariant() != 0 || static_cast<int>(i) == mPostRoundTeamIndex;
+    }
+    return false;
+}
+
+bool MasterGameMode::CanEditBuildOffPlot(const boost::shared_ptr<ServerPlayer>& player, const BlockPos& pos)
+{
+    if (GetMiniGame()->GetId() != eMiniGameId_Build)
+        return true;
+    if (!player || !IsRoundPlaying() || player->isSpectator() || player->getTeam() == NULL)
+        return false;
+    const AABB* area = GetTeamArea(player->getTeam());
+    return area != NULL && pos.x >= area->mMinX && pos.x + 1 <= area->mMaxX &&
+        pos.y >= area->mMinY && pos.y + 1 <= area->mMaxY &&
+        pos.z >= area->mMinZ && pos.z + 1 <= area->mMaxZ;
+}
+
 int MasterGameMode::GetBuildOffVotingPercent()
 {
     if (GetMiniGame()->GetId() != eMiniGameId_Build || GetState() != eInternalGameModeState_PostRound)
