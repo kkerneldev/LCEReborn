@@ -470,6 +470,8 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
             for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin();
                  it != players->end(); ++it)
             {
+                if ((*it)->getTeam() == NULL || GetPlayerStats((*it)->getSUID()) == NULL)
+                    continue;
                 std::map<int, int> scoresGiven = scoring->getVotesFromPlayer((*it)->mPlayerIndex);
                 std::map<int, int> scoresReceived = scoring->getVotesToVoteable((*it)->getTeam()->getTeamIndex());
                 PlayerStats::RoundStats* round = GetPlayerStats((*it)->getSUID())->getRoundStats(mCurrentRound);
@@ -479,10 +481,12 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
                     round->mScoresReceived[score] = 0;
                 }
                 for (std::map<int, int>::const_iterator vote = scoresGiven.begin(); vote != scoresGiven.end(); ++vote)
-                    ++round->mScoresGiven[vote->second];
+                    if (vote->second >= 0 && vote->second < PlayerStats::RoundStats::BUILD_SCORE_COUNT)
+                        ++round->mScoresGiven[vote->second];
                 for (std::map<int, int>::const_iterator vote = scoresReceived.begin(); vote != scoresReceived.end();
                      ++vote)
-                    ++round->mScoresReceived[vote->second];
+                    if (vote->second >= 0 && vote->second < PlayerStats::RoundStats::BUILD_SCORE_COUNT)
+                        ++round->mScoresReceived[vote->second];
             }
         }
     }
@@ -496,6 +500,8 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
             boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >* members =
                 (*teamIt)->getPlayers();
             AABB* area = gameMode->GetTeamArea(*teamIt);
+            if (area == NULL)
+                continue;
             BlockPos pos(0, 0, 0);
             for (boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >::iterator member =
                      members->begin();
@@ -503,6 +509,8 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
             {
                 boost::shared_ptr<ServerPlayer> builder = boost::dynamic_pointer_cast<ServerPlayer>(
                     level->getPlayer(*member));
+                if (!builder)
+                    continue;
                 for (int x = static_cast<int>(area->mMinX); x < static_cast<int>(area->mMaxX); ++x)
                 {
                     for (int y = static_cast<int>(area->mMinY); y < static_cast<int>(area->mMaxY); ++y)
