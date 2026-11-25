@@ -1230,20 +1230,25 @@ void MasterGameMode::PlacePlayers(std::vector<boost::shared_ptr<ServerPlayer> >*
     }
     if (ruleset != NULL)
     {
-        if (GetMiniGame()->IsTeamBasedSpawn())
+        if (GetMiniGame()->IsTeamBasedSpawn() && GetMiniGame()->GetId() != eMiniGameId_Lobby)
         {
             std::vector<AABB*> teamAreas;
             for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin();
                  playerIt != players->end(); ++playerIt)
             {
                 boost::shared_ptr<ServerPlayer> player = *playerIt;
+                if (player == NULL || player->getTeam() == NULL)
+                    continue;
                 const unsigned int teamIndex = player->getTeam()->getTeamIndex();
-                gApp.getLevelGenerationOptions()->getRequiredGameRules()->getNamedAreas(1 << teamIndex, &teamAreas);
-
-                AABB* teamArea = teamAreas.front();
-                if (teamAreas.size() > 1)
-                    teamAreas.at(mRandom.nextInt(static_cast<int>(teamAreas.size()) - 1));
-                GameModeUtilities::SpawnWithinArea(player, teamArea);
+                LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+                if (teamIndex >= 32 || options == NULL || options->getRequiredGameRules() == NULL)
+                    continue;
+                options->getRequiredGameRules()->getNamedAreas(1U << teamIndex, &teamAreas);
+                if (teamAreas.empty())
+                    continue;
+                AABB* teamArea = teamAreas.at(mRandom.nextInt(static_cast<int>(teamAreas.size())));
+                if (teamArea != NULL)
+                    GameModeUtilities::SpawnWithinArea(player, teamArea);
                 teamAreas.clear();
             }
             return;
