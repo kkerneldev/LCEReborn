@@ -1,3 +1,4 @@
+#include "game/core/ExtraStrings.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
@@ -2501,9 +2502,9 @@ void MiniGameDef::addChestItem(std::vector<ChestItemsInfo>* items, not_null_ptr<
 
 unsigned int MiniGameDef::GetName() const
 {
-    static const unsigned int names[] = {0, IDS_MINI_GAME_01, IDS_MINI_GAME_02, IDS_MINI_GAME_03};
+    static const unsigned int names[] = {0, IDS_MINI_GAME_01, IDS_MINI_GAME_02, IDS_MINI_GAME_03, IDS_LCE_BUILD_OFF};
     unsigned int id = mId;
-    if (id != eMiniGameId_Lobby && id < eMiniGameId_Build)
+    if (id != eMiniGameId_Lobby && id <= eMiniGameId_Build)
         return names[id];
     return 0xffffffffU;
 }
@@ -2846,6 +2847,8 @@ std::wstring MiniGameDef::getTextureName() const
         return L"MG02icon";
     case eMiniGameId_Glide:
         return L"MG03icon";
+    case eMiniGameId_Build:
+        return L"CreateWorldIcon";
     default:
         return L"MinecraftBroken";
     }
