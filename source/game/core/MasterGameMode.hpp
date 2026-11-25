@@ -244,6 +244,8 @@ public:
     int GetMaxKills();
     int GetActiveTeamCount();
     int GetBuildOffVotingPercent();
+    bool ValidateBuildOffVote(const boost::shared_ptr<ServerPlayer>& player, int type, int target, int value);
+    bool CanEditBuildOffPlot(const boost::shared_ptr<ServerPlayer>& player, const BlockPos& pos);
     Vec3* GetLastKnownPosition(boost::shared_ptr<Player> player);
     virtual AABB* GetSweptVolumeFromLastKnownPosition(boost::shared_ptr<Player> player);
     virtual unsigned int GetLastCheckpointID(const StatsUID& uid);
