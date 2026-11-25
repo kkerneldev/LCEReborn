@@ -568,3 +568,31 @@ ConsoleGameRules::EGameRuleType LevelRuleset::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_LevelRules;
 }
+
+void LevelRuleset::ensureBuildOffPlots(int originX, int originY, int originZ)
+{
+    // Dedicated Build Off fallback: eight 48x48 plots, 64 blocks high.
+    // Single-bit tags identify teams; wall tags occupy the next byte.
+    if (getNamedArea(L"BuildOffPlot0") != NULL)
+        return;
+    for (unsigned int i = 0; i < 8; ++i)
+    {
+        std::vector<AABB*> existing;
+        getNamedAreas(1U << i, &existing);
+        if (!existing.empty())
+            return; // Preserve authored arena rules.
+    }
+    for (int i = 0; i < 8; ++i)
+    {
+        NamedAreaRuleDefinition* plot = static_cast<NamedAreaRuleDefinition*>(
+            addChild(ConsoleGameRules::eGameRuleType_NamedArea));
+        wchar_t name[32];
+        swprintf(name, 32, L"BuildOffPlot%d", i);
+        plot->addAttribute(L"name", name);
+        const int x = originX + (i % 4) * 49;
+        const int z = originZ + (i / 4) * 49;
+        plot->updateWithPoints(x, originY, z, x + 48, originY + 64, z + 48);
+        // LevelRuleset is a friend of GameRuleDefinition.
+        plot->mDataTag = 1U << i;
+    }
+}
