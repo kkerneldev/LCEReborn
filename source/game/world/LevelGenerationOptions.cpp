@@ -1,4 +1,5 @@
 #include "game/world/LevelGenerationOptions.hpp"
+#include "game/world/LevelRuleset.hpp"
 #include "game/core/StringIds.hpp"
 
 #include <climits>
@@ -794,7 +795,8 @@ BlockPos* LevelGenerationOptions::getSpawnPos()
 
 bool LevelGenerationOptions::getuseFlatWorld()
 {
-    return mUseFlatWorld;
+    return mUseFlatWorld || (mRequiredGameRules != NULL &&
+        mRequiredGameRules->getRuleType() == LevelRules::eLevelRuleType_Build);
 }
 
 int LevelGenerationOptions::getCloudHeight()
