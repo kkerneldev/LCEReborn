@@ -1215,6 +1215,19 @@ void MasterGameMode::PlacePlayers(std::vector<boost::shared_ptr<ServerPlayer> >*
             player->setItemSlot(EquipmentSlot::HEAD, ItemInstance::EMPTY);
     }
 
+    if (GetMiniGame()->GetId() == eMiniGameId_Build && !spectators)
+    {
+        for (unsigned int i = 0; i < players->size(); ++i)
+        {
+            boost::shared_ptr<ServerPlayer> player = players->at(i);
+            AABB* area = GetTeamArea(player->getTeam());
+            if (area != NULL && player->mConnection != NULL)
+                player->mConnection->teleport((area->mMinX + area->mMaxX) * 0.5,
+                    area->mMinY + 0.1, (area->mMinZ + area->mMaxZ) * 0.5,
+                    player->mYRot, player->mXRot, true, true);
+        }
+        return;
+    }
     if (ruleset != NULL)
     {
         if (GetMiniGame()->IsTeamBasedSpawn())
@@ -1787,16 +1800,17 @@ std::vector<PlayerTeam*> MasterGameMode::GetActiveTeams()
 
 bool MasterGameMode::ValidateBuildOffVote(const boost::shared_ptr<ServerPlayer>& player, int type, int target, int value)
 {
-    if (!player || GetMiniGame()->GetId() != eMiniGameId_Build || player->isSpectator())
+    if (!player || player->isSpectator())
         return false;
     if (type == Voteables::eVoteable_BuildOffTheme)
     {
-        if (IsRoundPlaying() || GetState() == eInternalGameModeState_PostRound)
+        if (gApp.GetFirstMiniGameType() != eMiniGameId_Build ||
+            (GetState() != eInternalGameModeState_Lobby && GetState() != eInternalGameModeState_LobbyCountdown))
             return false;
         return (value == 1 || value == -1) &&
             std::find(mThemeWordIds.begin(), mThemeWordIds.end(), target) != mThemeWordIds.end();
     }
-    if (type != Voteables::eVoteable_BuildOffScoring || GetState() != eInternalGameModeState_PostRound ||
+    if (GetMiniGame()->GetId() != eMiniGameId_Build || type != Voteables::eVoteable_BuildOffScoring || GetState() != eInternalGameModeState_PostRound ||
         value < -1 || value >= 4 || player->getTeam() == NULL)
         return false;
     const std::vector<PlayerTeam*> teams = GetActiveTeams();
@@ -2225,7 +2239,8 @@ void MasterGameMode::Tick()
                 TumbleGenerator* tumbleGenerator = mMapGenerator == NULL
                                                        ? NULL
                                                        : dynamic_cast<TumbleGenerator*>(mMapGenerator);
-                GameModeUtilities::SpreadPlayers(roundPlayers, teamArea, TEAM_AREA_SPREAD_DISTANCE,
+                if (teamArea != NULL)
+                    GameModeUtilities::SpreadPlayers(roundPlayers, teamArea, TEAM_AREA_SPREAD_DISTANCE,
                                                  gMinecraftServer->getLevel(0), false, tumbleGenerator);
 
                 for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = roundPlayers->begin();
