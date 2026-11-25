@@ -1849,7 +1849,16 @@ void ServerGamePacketListenerImpl::handleGameCommand(boost::shared_ptr<GameComma
 
 void ServerGamePacketListenerImpl::handleVote(boost::shared_ptr<VotePacket> packet)
 {
-    if (packet->voteableId >= -1 && packet->voteableId < 5)
+    if (mServer->mMasterGameMode == NULL)
+        return;
+    if (packet->voteableId == Voteables::eVoteable_BuildOffTheme ||
+        packet->voteableId == Voteables::eVoteable_BuildOffScoring)
+    {
+        if (packet->playerId != mPlayer->mPlayerIndex ||
+            !mServer->mMasterGameMode->ValidateBuildOffVote(mPlayer, packet->voteableId, packet->voteId, packet->vote))
+            return;
+    }
+    if (packet->voteableId >= 0 && packet->voteableId < 4)
     {
         Voteable* voteable = mServer->mMasterGameMode->mVoteables->getVoteable(packet->voteableId);
         if (voteable != 0)
