@@ -1769,10 +1769,38 @@ std::vector<PlayerTeam*> MasterGameMode::GetActiveTeams()
     for (unsigned int index = 0; index < players.size(); ++index)
     {
         PlayerTeam* team = scoreboard->getPlayersTeam(players[index]->mXuid);
-        if (std::find(teams.begin(), teams.end(), team) == teams.end())
+        if (team != NULL && std::find(teams.begin(), teams.end(), team) == teams.end())
             teams.push_back(team);
     }
     return teams;
+}
+
+int MasterGameMode::GetBuildOffVotingPercent()
+{
+    if (GetMiniGame()->GetId() != eMiniGameId_Build || GetState() != eInternalGameModeState_PostRound)
+        return 0;
+    Voteable* scoring = mVoteables->getVoteable(Voteables::eVoteable_BuildOffScoring);
+    if (scoring == NULL)
+        return 0;
+    const std::vector<PlayerTeam*> teams = GetActiveTeams();
+    const std::vector<boost::shared_ptr<ServerPlayer> > players = GetPlayers(true, false);
+    int eligible = 0;
+    int voted = 0;
+    for (unsigned int t = 0; t < teams.size(); ++t)
+    {
+        if (GetMiniGame()->GetGameVariant() == 0 && static_cast<int>(t) != mPostRoundTeamIndex)
+            continue;
+        for (unsigned int i = 0; i < players.size(); ++i)
+        {
+            if (players[i]->getTeam() == NULL || players[i]->getTeam() == teams[t])
+                continue;
+            ++eligible;
+            int vote = scoring->getVote(players[i]->mPlayerIndex, teams[t]->getTeamIndex());
+            if (vote >= 0 && vote < 4)
+                ++voted;
+        }
+    }
+    return eligible == 0 ? 100 : voted * 100 / eligible;
 }
 
 bool MasterGameMode::CanEndPostGame()
