@@ -1,3 +1,4 @@
+#include "game/core/Minecraft.hpp"
 #include "game/world/block/PistonBaseBlock.hpp"
 #include "game/world/block/BlockId.hpp"
 
@@ -193,6 +194,8 @@ int PistonBaseBlock::isPushable(const BlockState* state, Level* level, const Blo
 
 void PistonBaseBlock::checkIfExtend(Level* level, const BlockPos& pos, const BlockState* state)
 {
+    if (Minecraft::InMiniGame(eMiniGameId_Build, false))
+        return;
     const Direction* facing = state->getValue(FACING);
     if (getNeighborSignal(level, pos, facing))
     {
@@ -349,6 +352,8 @@ int PistonBaseBlock::moveBlocks(Level* level, const BlockPos& pos, const Directi
 bool PistonBaseBlock::triggerEvent(const BlockState* state, Level* level, const BlockPos& pos, int eventId,
                                    int eventParam)
 {
+    if (Minecraft::InMiniGame(eMiniGameId_Build, false))
+        return false;
     const Direction* facing = state->getValue(FACING);
     if (!level->mIsClientSide)
     {
