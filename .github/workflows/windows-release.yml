@@ -14,6 +14,7 @@ on:
     branches:
       - main
       - live-integration
+      - experimental/build-off
     tags:
       - 'v*'
   pull_request:
@@ -45,6 +46,11 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: '3.12'
+
+      - name: Generate Build Off resources
+        run: |
+          python tools/gamedata/build_off_loc.py
+          python -c "from pathlib import Path; import shutil; src=Path('Common/res/TitleUpdate/GameRules'); dst=Path('resources/pc/build-off/Common/res/TitleUpdate/GameRules'); dst.mkdir(parents=True, exist_ok=True); [shutil.copy2(src / n, dst / n) for n in ('MG04.xml', 'gameModeLanguages.loc')]"
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -189,6 +195,11 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: '3.12'
+
+      - name: Generate Build Off resources
+        run: |
+          python tools/gamedata/build_off_loc.py
+          python -c "from pathlib import Path; import shutil; src=Path('Common/res/TitleUpdate/GameRules'); dst=Path('resources/pc/build-off/Common/res/TitleUpdate/GameRules'); dst.mkdir(parents=True, exist_ok=True); [shutil.copy2(src / n, dst / n) for n in ('MG04.xml', 'gameModeLanguages.loc')]"
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
