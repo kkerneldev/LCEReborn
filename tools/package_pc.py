@@ -581,6 +581,11 @@ def readme_text(source, glibc):
 
 def check_names(entries):
     for arcname, _ in entries:
+        if arcname in (
+            "resources/build-off/Common/res/TitleUpdate/GameRules/MG04.xml",
+            "resources/build-off/Common/res/TitleUpdate/GameRules/gameModeLanguages.loc",
+        ):
+            continue
         if not ALLOWED_NAME.search(os.path.basename(arcname)):
             raise PackageError("Refusing to package %s: not a program, library, image or text file" % arcname)
 
