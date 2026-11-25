@@ -104,36 +104,53 @@ void WallGenerator::StartGeneration(Level* level)
 
     if (mWalls.empty())
     {
-        const int size = static_cast<int>(std::floor((mBounds->mMaxX - mBounds->mMinX) * 0.5));
-        for (int x = 0; x < 3; ++x)
+        // Build walls from plot boundaries instead of assuming a square 2x2 arena.
+        // Shared walls are marked internal so judging can remove them.
+        for (std::vector<AABB*>::const_iterator it = mAreas.begin(); it != mAreas.end(); ++it)
         {
-            for (int z = 0; z < 3; ++z)
+            const AABB& plot = **it;
+            AABB sides[] = {
+                AABB(plot.mMinX - 1, plot.mMinY, plot.mMinZ - 1,
+                     plot.mMinX, plot.mMaxY, plot.mMaxZ + 1),
+                AABB(plot.mMaxX, plot.mMinY, plot.mMinZ - 1,
+                     plot.mMaxX + 1, plot.mMaxY, plot.mMaxZ + 1),
+                AABB(plot.mMinX - 1, plot.mMinY, plot.mMinZ - 1,
+                     plot.mMaxX + 1, plot.mMaxY, plot.mMinZ),
+                AABB(plot.mMinX - 1, plot.mMinY, plot.mMaxZ,
+                     plot.mMaxX + 1, plot.mMaxY, plot.mMaxZ + 1)
+            };
+            for (unsigned int side = 0; side < 4; ++side)
             {
-                const bool internal = IsPointInternal(x, z, 2);
-                AABB* post = AABB::newTemp(mBounds->mMinX + x * size, mBounds->mMinY, mBounds->mMinZ + z * size,
-                                           mBounds->mMinX + x * size + 1.0, mBounds->mMinY + 16.0,
-                                           mBounds->mMinZ + z * size + 1.0);
-                mWalls.push_back(new Wall(post, internal, true));
-
-                if (x + 1 <= 2)
+                bool internal = false;
+                for (std::vector<AABB*>::const_iterator other = mAreas.begin(); other != mAreas.end(); ++other)
                 {
-                    const bool boundary = internal || IsPointInternal(x + 1, z, 2);
-                    const double wallZ = mBounds->mMinZ + z * size;
-                    AABB* side = AABB::newTemp(mBounds->mMinX + x * size + 1.0, mBounds->mMinY, wallZ,
-                                               mBounds->mMinX + (x + 1) * size, mBounds->mMinY + 16.0, wallZ + 1.0);
-                    mWalls.push_back(new Wall(side, boundary, false));
+                    if (*other == *it)
+                        continue;
+                    const AABB& next = **other;
+                    const bool overlapX = plot.mMinX < next.mMaxX && plot.mMaxX > next.mMinX;
+                    const bool overlapZ = plot.mMinZ < next.mMaxZ && plot.mMaxZ > next.mMinZ;
+                    if ((side == 0 && overlapZ && next.mMaxX == plot.mMinX - 1) ||
+                        (side == 1 && overlapZ && next.mMinX == plot.mMaxX + 1) ||
+                        (side == 2 && overlapX && next.mMaxZ == plot.mMinZ - 1) ||
+                        (side == 3 && overlapX && next.mMinZ == plot.mMaxZ + 1))
+                    {
+                        internal = true;
+                        break;
+                    }
                 }
-                if (z + 1 <= 2)
+                bool duplicate = false;
+                for (std::vector<Wall*>::const_iterator wall = mWalls.begin(); wall != mWalls.end(); ++wall)
                 {
-                    const bool boundary = internal || IsPointInternal(x, z + 1, 2);
-                    const double wallX = mBounds->mMinX + x * size;
-                    AABB* side = AABB::newTemp(wallX, mBounds->mMinY, mBounds->mMinZ + z * size + 1.0, wallX + 1.0,
-                                               mBounds->mMinY + 16.0, mBounds->mMinZ + (z + 1) * size);
-                    mWalls.push_back(new Wall(side, boundary, false));
+                    if ((*wall)->mArea->equals(&sides[side]))
+                    {
+                        duplicate = true;
+                        break;
+                    }
                 }
+                if (!duplicate)
+                    mWalls.push_back(new Wall(&sides[side], internal, false));
             }
         }
-
     }
 
     // Clear builds on every round, even when explicit walls were supplied.
