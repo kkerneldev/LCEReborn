@@ -168,9 +168,14 @@ EMiniGameId CommonMasterGameMode::GetNextGameMode() const
 
 AABB* CommonMasterGameMode::GetTeamArea(Team* team) const
 {
-    LevelRuleset* rules = gApp.getLevelGenerationOptions()->getRequiredGameRules();
+    if (team == NULL || team->getTeamIndex() >= 32)
+        return NULL;
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+    if (options == NULL || options->getRequiredGameRules() == NULL)
+        return NULL;
+    LevelRuleset* rules = options->getRequiredGameRules();
     std::vector<AABB*> areas;
-    rules->getNamedAreas(1 << team->getTeamIndex(), &areas);
+    rules->getNamedAreas(1U << team->getTeamIndex(), &areas);
     if (areas.empty())
         return NULL;
     return areas.at(0);
