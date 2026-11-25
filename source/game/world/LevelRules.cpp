@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "game/core/DLCPack.hpp"
+#include "game/core/GameRulesSource.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
@@ -58,6 +59,8 @@ std::vector<LevelRuleset*>* LevelRules::getLevelRules()
 
 void LevelRules::getRulesByType(ELevelRuleType type, std::vector<LevelRuleset*>* rules)
 {
+    if (type == eLevelRuleType_Build)
+        ensureBuildOffArena();
     rules->clear();
     std::vector<LevelRuleset*>::iterator rule = m_levelRules.begin();
     while (rule != m_levelRules.end())
@@ -98,6 +101,8 @@ void LevelRules::populateRulesets()
 
 void LevelRules::getRulesByType(ELevelRuleType type, std::vector<LevelRulesetGroup*>* groups)
 {
+    if (type == eLevelRuleType_Build)
+        ensureBuildOffArena();
     if (m_ruleGroups.empty())
     {
         populateRulesets();
@@ -161,4 +166,28 @@ bool LevelRules::LevelRulesetGroup::SortMapRules(const LevelRulesetGroup* first,
         return firstIndex < secondIndex;
     }
     return firstTheme > secondTheme;
+}
+
+void LevelRules::ensureBuildOffArena()
+{
+    for (std::vector<LevelRuleset*>::const_iterator it = m_levelRules.begin(); it != m_levelRules.end(); ++it)
+        if ((*it)->getRuleType() == eLevelRuleType_Build)
+            return;
+
+    LevelRuleset* rules = new LevelRuleset();
+    rules->addAttribute(L"ruleType", L"4");
+    LevelGenerationOptions* options = new LevelGenerationOptions();
+    options->setSrc(LevelGenerationOptions::eSrc_Local);
+    options->setGrSource(new GameRulesSource());
+    options->setWorldName(L"Build Off");
+    options->setDisplayName(L"Build Off Arena");
+    options->setDefaultSaveName(L"BuildOff");
+    options->addAttribute(L"themeId", L"20");
+    options->addAttribute(L"mapSize", L"0");
+    options->addAttribute(L"flatworld", L"true");
+    options->setRequiredGameRules(rules);
+    rules->setGenerationOptions(options);
+    rules->ensureBuildOffPlots(-98, 65, -49);
+    options->setLoadedData();
+    addLevelRule(L"BuildOff", rules);
 }
