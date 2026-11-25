@@ -1,4 +1,5 @@
 #include "game/core/CommonMasterGameMode.hpp"
+#include <algorithm>
 #include "game/core/EntityType.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/MasterGameMode.hpp"
@@ -175,6 +176,8 @@ AABB* CommonMasterGameMode::GetTeamArea(Team* team) const
         return NULL;
     LevelRuleset* rules = options->getRequiredGameRules();
     std::vector<AABB*> areas;
+    if (GetMiniGame()->GetId() == eMiniGameId_Build)
+        rules->ensureBuildOffPlots(-98, 65, -49);
     rules->getNamedAreas(1U << team->getTeamIndex(), &areas);
     if (areas.empty())
         return NULL;
@@ -312,7 +315,14 @@ long long CommonMasterGameMode::RestartMapGenerator()
     case eMiniGameId_Build:
     {
         std::vector<AABB*> buildAreas;
-        rules->getNamedAreas(0xff, &buildAreas);
+        rules->ensureBuildOffPlots(-98, 65, -49);
+        for (unsigned int i = 0; i < 8; ++i)
+        {
+            std::vector<AABB*> areas;
+            rules->getNamedAreas(1U << i, &areas);
+            if (!areas.empty() && std::find(buildAreas.begin(), buildAreas.end(), areas.front()) == buildAreas.end())
+                buildAreas.push_back(areas.front());
+        }
         std::vector<AABB*> wallAreas;
         rules->getNamedAreas(0xff00, &wallAreas);
         delete mMapGenerator;
