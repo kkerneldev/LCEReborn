@@ -187,7 +187,7 @@ void LevelRules::ensureBuildOffArena()
     options->addAttribute(L"flatworld", L"true");
     options->setRequiredGameRules(rules);
     rules->setGenerationOptions(options);
-    rules->ensureBuildOffPlots(-98, 65, -49);
+    rules->ensureBuildOffPlots(96, 4, 0);
     options->setLoadedData();
     addLevelRule(L"BuildOff", rules);
 }

@@ -1,6 +1,8 @@
 #include "game/world/LevelRuleset.hpp"
 
 #include <cstdio>
+#include <algorithm>
+#include <cmath>
 
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
@@ -289,7 +291,10 @@ void LevelRuleset::getNamedAreas(int areaType, std::vector<AABB*>* areas)
 {
     for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
     {
-        if (((*it)->mDataTag & areaType) == areaType)
+        const int matched = (*it)->mDataTag & areaType;
+        const bool buildGroup = mRuleType == LevelRules::eLevelRuleType_Build
+                                && (areaType == 0xff || areaType == 0xff00);
+        if (buildGroup ? matched != 0 : matched == areaType)
         {
             areas->push_back((*it)->getArea());
         }
@@ -571,28 +576,68 @@ ConsoleGameRules::EGameRuleType LevelRuleset::getActionType()
 
 void LevelRuleset::ensureBuildOffPlots(int originX, int originY, int originZ)
 {
-    // Dedicated Build Off fallback: eight 48x48 plots, 64 blocks high.
-    // Single-bit tags identify teams; wall tags occupy the next byte.
-    if (getNamedArea(L"BuildOffPlot0") != NULL)
+    if (mRuleType != LevelRules::eLevelRuleType_Build)
         return;
-    for (unsigned int i = 0; i < 8; ++i)
+
+    std::vector<AABB*> plots;
+    getNamedAreas(0xff, &plots);
+    if (plots.empty())
     {
-        std::vector<AABB*> existing;
-        getNamedAreas(1U << i, &existing);
-        if (!existing.empty())
-            return; // Preserve authored arena rules.
+        // Eight deterministic 16x16 plots, with one-block shared walls.
+        // The flat world has grass at Y=3, so the building floor is Y=4.
+        const int size = 16;
+        const int step = size + 1;
+        for (unsigned int i = 0; i < 8; ++i)
+        {
+            NamedAreaRuleDefinition* plot = static_cast<NamedAreaRuleDefinition*>(
+                addChild(ConsoleGameRules::eGameRuleType_NamedArea));
+            wchar_t name[32];
+            swprintf(name, 32, L"BuildOffPlot%d", i);
+            plot->addAttribute(L"name", name);
+            const int x = originX + static_cast<int>(i % 4) * step;
+            const int z = originZ + static_cast<int>(i / 4) * step;
+            plot->updateWithPoints(x, originY, z, x + size, originY + 16, z + size);
+            plot->mDataTag = 1U << i;
+            plots.push_back(plot->getArea());
+        }
     }
-    for (int i = 0; i < 8; ++i)
+
+    // WallGenerator grows its transaction four blocks on every horizontal side.
+    // ActiveChunkArea uses inclusive CHUNK coordinates, not world blocks.
+    // Add the arena bounds even if a separate lobby ActiveArea already exists.
+    if (getNamedArea(L"BuildOffActiveChunks") == NULL)
     {
-        NamedAreaRuleDefinition* plot = static_cast<NamedAreaRuleDefinition*>(
+        std::vector<AABB*> walls;
+        getNamedAreas(0xff00, &walls);
+        std::vector<AABB*> all(plots);
+        all.insert(all.end(), walls.begin(), walls.end());
+        double minX = all.front()->mMinX, maxX = all.front()->mMaxX;
+        double minZ = all.front()->mMinZ, maxZ = all.front()->mMaxZ;
+        for (std::vector<AABB*>::const_iterator it = all.begin(); it != all.end(); ++it)
+        {
+            minX = std::min(minX, (*it)->mMinX);
+            minZ = std::min(minZ, (*it)->mMinZ);
+            maxX = std::max(maxX, (*it)->mMaxX);
+            maxZ = std::max(maxZ, (*it)->mMaxZ);
+        }
+        NamedAreaRuleDefinition* area = static_cast<NamedAreaRuleDefinition*>(
+            addChild(ConsoleGameRules::eGameRuleType_ActiveChunkArea));
+        area->addAttribute(L"name", L"BuildOffActiveChunks");
+        area->updateWithPoints(static_cast<int>(std::floor((minX - 5.0) / 16.0)), 0,
+                               static_cast<int>(std::floor((minZ - 5.0) / 16.0)),
+                               static_cast<int>(std::floor((maxX + 5.0) / 16.0)), 1,
+                               static_cast<int>(std::floor((maxZ + 5.0) / 16.0)));
+    }
+
+    if (getNamedArea(L"RoundSpawn") == NULL)
+    {
+        const AABB* first = plots.front();
+        NamedAreaRuleDefinition* spawn = static_cast<NamedAreaRuleDefinition*>(
             addChild(ConsoleGameRules::eGameRuleType_NamedArea));
-        wchar_t name[32];
-        swprintf(name, 32, L"BuildOffPlot%d", i);
-        plot->addAttribute(L"name", name);
-        const int x = originX + (i % 4) * 49;
-        const int z = originZ + (i / 4) * 49;
-        plot->updateWithPoints(x, originY, z, x + 48, originY + 64, z + 48);
-        // LevelRuleset is a friend of GameRuleDefinition.
-        plot->mDataTag = 1U << i;
+        spawn->addAttribute(L"name", L"RoundSpawn");
+        spawn->updateWithPoints(static_cast<int>(first->mMinX) + 2, static_cast<int>(first->mMinY),
+                                static_cast<int>(first->mMinZ) + 2,
+                                static_cast<int>(first->mMaxX) - 2, static_cast<int>(first->mMinY) + 1,
+                                static_cast<int>(first->mMaxZ) - 2);
     }
 }

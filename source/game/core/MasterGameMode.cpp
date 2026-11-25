@@ -285,6 +285,8 @@ MasterGameMode::MasterGameMode(std::vector<LevelRules::LevelRulesetGroup*>* play
 
     Setup(gApp.GetFirstMiniGameType());
     mLobbyLevelGenOptions = gApp.getLevelGenerationOptions();
+    mLobbyMinX = mLobbyMinZ = -2;
+    mLobbyMaxX = mLobbyMaxZ = 2;
     AABB* activeArea = mLobbyLevelGenOptions->getRequiredGameRules()->getNamedArea(L"ActiveArea");
     if (activeArea != NULL)
     {
@@ -919,7 +921,7 @@ unsigned int MasterGameMode::GetTeamCount()
         LevelRuleset* rules = mNextLevelGenOptions->getRequiredGameRules();
         if (rules == NULL)
             return 0;
-        rules->ensureBuildOffPlots(-98, 65, -49);
+        rules->ensureBuildOffPlots(96, 4, 0);
         for (unsigned int i = 0; i < 8; ++i)
         {
             std::vector<AABB*> areas;
@@ -1118,6 +1120,7 @@ bool MasterGameMode::LoadNewGameRules()
     GetKillBoxes(mNextLevelGenOptions, mKillboxes);
 
     mActiveChunkAreas.clear();
+    mNextLevelGenOptions->getRequiredGameRules()->ensureBuildOffPlots(96, 4, 0);
     mNextLevelGenOptions->getRequiredGameRules()->getActiveChunkAreas(&mActiveChunkAreas);
     mActiveChunkBounds.DeactivateCache();
     mActiveChunkBounds.ClearCache();
@@ -1221,6 +1224,8 @@ void MasterGameMode::PlacePlayers(std::vector<boost::shared_ptr<ServerPlayer> >*
         {
             boost::shared_ptr<ServerPlayer> player = players->at(i);
             AABB* area = GetTeamArea(player->getTeam());
+            if (area == NULL && ruleset != NULL)
+                area = ruleset->getNamedArea(L"RoundSpawn");
             if (area != NULL && player->mConnection != NULL)
                 player->mConnection->teleport((area->mMinX + area->mMaxX) * 0.5,
                     area->mMinY + 0.1, (area->mMinZ + area->mMaxZ) * 0.5,
@@ -2105,6 +2110,8 @@ void MasterGameMode::Tick()
         if (AreLevelChunksLoaded() && !mWaitingForChunkLoading)
         {
             const bool newRound = GetState() == eInternalGameModeState_LoadingRound;
+            if (newRound && GetMiniGame()->GetId() == eMiniGameId_Build)
+                AddPlayersToTeams();
             PositionPlayersAtStartingPosition();
             RemoveAllEntities(false);
             if (newRound)
@@ -2149,7 +2156,8 @@ void MasterGameMode::Tick()
             PositionPlayersAtStartingPosition();
         if (mRoundInfo.getCurrentSubRoundNumber() > 0)
             SetupTeams();
-        AddPlayersToTeams();
+        if (GetMiniGame()->GetId() != eMiniGameId_Build)
+            AddPlayersToTeams();
         SetState(eInternalGameModeState_WaitingToStart);
         AddTimer(eTimerID_RoundPreparing, OnWaitingToStartCountdown, NULL,
                  GetMiniGame()->getTimerSpec(eTimerID_RoundPreparing));
@@ -3100,7 +3108,13 @@ bool MasterGameMode::IsChunkWithinLobbyRegionOfRoundLevel(int chunkX, int chunkZ
 void MasterGameMode::GetMaxActiveBounds(int& minX, int& minZ, int& maxX, int& maxZ)
 {
     if (mActiveChunkAreas.empty())
+    {
+        minX = mLobbyMinX;
+        minZ = mLobbyMinZ;
+        maxX = mLobbyMaxX;
+        maxZ = mLobbyMaxZ;
         return;
+    }
 
     std::vector<AABB*>::iterator areaIt = mActiveChunkAreas.begin();
     minX = static_cast<int>((*areaIt)->mMinX);

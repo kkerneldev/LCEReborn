@@ -620,6 +620,7 @@ void ClientMasterGameMode::SetNextLevelGenerationOptions(LevelGenerationOptions*
     if (owned)
         mNextLevelGenOptions->loadBaseSaveData();
     mActiveChunkAreas.clear();
+    mNextLevelGenOptions->getRequiredGameRules()->ensureBuildOffPlots(96, 4, 0);
     mNextLevelGenOptions->getRequiredGameRules()->getActiveChunkAreas(&mActiveChunkAreas);
 }
 

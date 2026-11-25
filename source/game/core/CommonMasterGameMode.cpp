@@ -193,8 +193,16 @@ AABB* CommonMasterGameMode::GetTeamArea(Team* team) const
     LevelRuleset* rules = options->getRequiredGameRules();
     std::vector<AABB*> areas;
     if (GetMiniGame()->GetId() == eMiniGameId_Build)
-        rules->ensureBuildOffPlots(-98, 65, -49);
-    rules->getNamedAreas(1U << team->getTeamIndex(), &areas);
+        rules->ensureBuildOffPlots(96, 4, 0);
+    unsigned int index = team->getTeamIndex();
+    if (rules->getRuleType() == LevelRules::eLevelRuleType_Build)
+    {
+        const std::wstring name = team->getName();
+        if (name.size() != 1 || name[0] < L'0' || name[0] > L'7')
+            return NULL;
+        index = static_cast<unsigned int>(name[0] - L'0');
+    }
+    rules->getNamedAreas(1U << index, &areas);
     if (areas.empty())
         return NULL;
     return areas.at(0);
@@ -331,7 +339,7 @@ long long CommonMasterGameMode::RestartMapGenerator()
     case eMiniGameId_Build:
     {
         std::vector<AABB*> buildAreas;
-        rules->ensureBuildOffPlots(-98, 65, -49);
+        rules->ensureBuildOffPlots(96, 4, 0);
         for (unsigned int i = 0; i < 8; ++i)
         {
             std::vector<AABB*> areas;
