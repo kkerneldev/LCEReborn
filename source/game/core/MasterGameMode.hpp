@@ -243,6 +243,7 @@ public:
     int GetPostGameTime();
     int GetMaxKills();
     int GetActiveTeamCount();
+    int GetBuildOffVotingPercent();
     Vec3* GetLastKnownPosition(boost::shared_ptr<Player> player);
     virtual AABB* GetSweptVolumeFromLastKnownPosition(boost::shared_ptr<Player> player);
     virtual unsigned int GetLastCheckpointID(const StatsUID& uid);
